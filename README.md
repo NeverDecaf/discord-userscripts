@@ -1,1 +1,3 @@
-## discord-userscripts
+# discord-userscripts
+## shrink_pasted_images.user.js
+Shrink images pasted into the client with `ctrl+v` to bring them below the 8MB upload limit. Images smaller than 8MB, when copied to the clipboard, can sometimes become larger than 8MB due to being converted to a pixmap. This script converts all large images to jpeg then reduces jpeg quality until the filesize is under 8MB. This (currently) only works for pasted images and not uploaded files.
