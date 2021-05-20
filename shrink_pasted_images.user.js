@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Discord Auto-Shrink Images
-// @version      0.1.2
+// @version      0.1.3
 // @description  When pasting images >8MB, shrink filesize to below 8MB by converting to jpeg then reducing jpeg quality.
 // @author       NeverDecaf
 // @match        discord.com/*
@@ -188,7 +188,7 @@ function convertBlobs(type, func, caller, args) {
 
 function waitForLoad(maxtimems, callback) {
     var interval = 100; // ms
-    if (maxtimems > 0 && (typeof webpackJsonp === 'undefined' || wm.findByUniqueProperties(["hasUnread", "getUnreadGuilds"]) === null)) {
+    if (maxtimems > 0 && (typeof webpackJsonp === 'undefined' || wm.find(m => m.default && m.default.toString().includes('anyFileTooLarge')) === null)) {
         setTimeout(() => waitForLoad(maxtimems - interval, callback), interval);
     } else {
         callback();
