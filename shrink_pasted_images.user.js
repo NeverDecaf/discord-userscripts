@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Discord Auto-Shrink Images
-// @version      0.1.3
+// @version      0.2.0
 // @description  When pasting images >8MB, shrink filesize to below 8MB by converting to jpeg then reducing jpeg quality.
 // @author       NeverDecaf
 // @match        discord.com/*
@@ -69,6 +69,37 @@ wm = (() => {
 
             return {find, findAll, findByUniqueProperties, findByPrototypes, findByDisplayName};
         })();
+
+// From an answer to: https://stackoverflow.com/questions/29321742/react-getting-a-component-from-a-dom-element-for-debugging/39165137
+function FindReact(dom, traverseUp = 0) {
+    const key = Object.keys(dom).find(key=>key.startsWith("__reactInternalInstance$"));
+    const domFiber = dom[key];
+    if (domFiber == null) return null;
+
+    // react <16
+    if (domFiber._currentElement) {
+        let compFiber = domFiber._currentElement._owner;
+        for (let i = 0; i < traverseUp; i++) {
+            compFiber = compFiber._currentElement._owner;
+        }
+        return compFiber._instance;
+    }
+
+    // react 16+
+    const GetCompFiber = fiber=>{
+        //return fiber._debugOwner; // this also works, but is __DEV__ only
+        let parentFiber = fiber.return;
+        while (typeof parentFiber.type == "string") {
+            parentFiber = parentFiber.return;
+        }
+        return parentFiber;
+    };
+    let compFiber = GetCompFiber(domFiber);
+    for (let i = 0; i < traverseUp; i++) {
+        compFiber = GetCompFiber(compFiber);
+    }
+    return compFiber.stateNode;
+}
 
 function dataURItoBlob(dataURI, filename) {
     var byteString = atob(dataURI.split(',')[1]);
@@ -163,23 +194,25 @@ function qualityForSize(image,fileSize){
 
 function convertBlobs(type, func, caller, args) {
     let promises = [];
-    for (i in args[0]) {
-        file = args[0][i];
-        if (file.size > wm.findByUniqueProperties(['anyFileTooLarge']).maxFileSize()) {
-            promises.push(new Promise((resolve, reject) => {
-                let image = new Image()
-                image.src = URL.createObjectURL(file)
-                image.onload = function () {
-                    var imgC = image2Canvas(image);
-                    var qualitySetting = qualityForSize(imgC, wm.findByUniqueProperties(['anyFileTooLarge']).maxFileSize());
-                    var dataURL = imgC.toDataURL("image/jpeg", qualitySetting);
+	for (let i=0; i<args[0].length; i++) {
+        var file = args[0][i];
+		if (file.type.split('/')[0] !== 'image')
+			continue
+		if (file.size <= wm.findByUniqueProperties(['anyFileTooLarge']).maxFileSize())
+			continue
+		promises.push(new Promise(function(resolve, reject) {
+			let image = new Image()
+			image.src = URL.createObjectURL(this.file)
+			image.onload = function () {
+				var imgC = image2Canvas(image);
+				var qualitySetting = qualityForSize(imgC, wm.findByUniqueProperties(['anyFileTooLarge']).maxFileSize());
+				var dataURL = imgC.toDataURL("image/jpeg", qualitySetting);
 
-                    let result = dataURItoBlob(dataURL, file.name.replace(/(.*)\.[^.]+$/, '$1_DOWNSCALED.JPEG'))
-                    args[0][i] = result;
-                    resolve(result);
-                }
-            }))
-        }
+				let result = dataURItoBlob(dataURL, this.file.name.replace(/(.*)\.[^.]+$/, '$1_DOWNSCALED.JPEG'))
+				args[0][this.index] = result;
+				resolve(result);
+			}.bind(this)
+		}.bind({index: parseInt(i), file: file})))
     }
     // If adding support for multi-upload you'll need this:
     Promise.all(promises).then(v => {func.apply(caller, args)});
@@ -194,19 +227,39 @@ function waitForLoad(maxtimems, callback) {
     }
 }
 
+function waitForUploadArea(maxtimems, callback) {
+    var interval = 100; // ms
+    if (maxtimems > 0 && (typeof webpackJsonp === 'undefined' || wm.findByUniqueProperties(['uploadArea']) === null || document.getElementsByClassName(wm.findByUniqueProperties(['uploadArea']).uploadArea).length == 0)) {
+        setTimeout(() => waitForUploadArea(maxtimems - interval, callback), interval);
+    } else {
+        callback();
+    }
+}
+
 waitForLoad(10000, () => {
 	var uploadFunc = wm.find(m => m.default && m.default.toString().includes('anyFileTooLarge'))
 	uploadFunc.default = (function () {
     var cacheF = uploadFunc.default
     return function () {
-        // only resize single images, since you can't upload more than one with ctrl + v
-        if (arguments[0].length == 1) {
-            if (arguments[0][0].size > wm.findByUniqueProperties(['anyFileTooLarge']).maxFileSize() && arguments[0][0].type.split('/')[0] === 'image') {
-                convertBlobs('image/jpeg', cacheF, this, arguments)
-                return
-            }
-        }
-        return cacheF.apply(this, arguments);
+		if ((arguments[0][0].size <= wm.findByUniqueProperties(['anyFileTooLarge']).maxFileSize()) || (arguments[0][0].type.split('/')[0] !== 'image')) {
+			return cacheF.apply(this, arguments);
+		}
+		convertBlobs('image/jpeg', cacheF, this, arguments)
+    };
+})();
+});
+
+waitForUploadArea(10000, () => {
+	var dropUploadFunc = FindReact(document.getElementsByClassName(wm.findByUniqueProperties(['uploadArea']).uploadArea)[0]).promptToUpload
+	FindReact(document.getElementsByClassName(wm.findByUniqueProperties(['uploadArea']).uploadArea)[0]).promptToUpload = (function () {
+    var cacheF = dropUploadFunc
+    return function () {
+        // resize all too large images
+		if (!(arguments[0] instanceof FileList)) {
+			return cacheF.apply(this, arguments);
+		}
+		arguments[0] = Array.from(arguments[0])
+		convertBlobs('image/jpeg', cacheF, this, arguments)
     };
 })();
 });
