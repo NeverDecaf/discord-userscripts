@@ -174,16 +174,15 @@ function convertBlobs(type, func, caller, args) {
                     var qualitySetting = qualityForSize(imgC, wm.findByUniqueProperties(['anyFileTooLarge']).maxFileSize());
                     var dataURL = imgC.toDataURL("image/jpeg", qualitySetting);
 
-                    let result = dataURItoBlob(dataURL, file.name.replace(/(.*)\.[^.]+$/, '$1.JPEG'))
+                    let result = dataURItoBlob(dataURL, file.name.replace(/(.*)\.[^.]+$/, '$1_DOWNSCALED.JPEG'))
                     args[0][i] = result;
-                    func.apply(caller, args);
                     resolve(result);
                 }
             }))
         }
     }
     // If adding support for multi-upload you'll need this:
-    Promise.all(promises).then(v => {});
+    Promise.all(promises).then(v => {func.apply(caller, args)});
 }
 
 function waitForLoad(maxtimems, callback) {
