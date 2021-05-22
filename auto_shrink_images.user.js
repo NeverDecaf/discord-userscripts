@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Discord Auto-Shrink Images
-// @version      0.2.0
+// @version      0.2.1
 // @description  When pasting images >8MB, shrink filesize to below 8MB by converting to jpeg then reducing jpeg quality.
 // @author       NeverDecaf
 // @match        discord.com/*
@@ -249,17 +249,31 @@ waitForLoad(10000, () => {
 })();
 });
 
-waitForUploadArea(10000, () => {
-	var dropUploadFunc = FindReact(document.getElementsByClassName(wm.findByUniqueProperties(['uploadArea']).uploadArea)[0]).promptToUpload
-	FindReact(document.getElementsByClassName(wm.findByUniqueProperties(['uploadArea']).uploadArea)[0]).promptToUpload = (function () {
-    var cacheF = dropUploadFunc
-    return function () {
-        // resize all too large images
-		if (!(arguments[0] instanceof FileList)) {
-			return cacheF.apply(this, arguments);
-		}
-		arguments[0] = Array.from(arguments[0])
-		convertBlobs('image/jpeg', cacheF, this, arguments)
-    };
-})();
-});
+var callback = function(mutationsList, observer) {
+    for(const mutation of mutationsList) {
+        if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach(e => {
+                if (e.className && typeof(e.className) === 'string' && e.className.split(' ').some((c) => /chat-.*/.test(c))) {
+                    e.childNodes.forEach(f => {
+                        if (f.className && typeof(f.className) === 'string' && f.className.split(' ').some((c) => /uploadArea-.*/.test(c))) {
+							FindReact(f).promptToUpload = (function () {
+							var cacheF = FindReact(f).promptToUpload
+							return function () {
+								// resize all too large images
+								if (!(arguments[0] instanceof FileList)) {
+									return cacheF.apply(this, arguments);
+								}
+								arguments[0] = Array.from(arguments[0])
+								convertBlobs('image/jpeg', cacheF, this, arguments)
+								};
+							})();
+							// observer.disconnect()
+                        }
+                    })
+                }
+            })
+        }
+    }
+};
+var observer = new MutationObserver(callback);
+observer.observe(document.getElementById('app-mount'), { attributes: false, childList: true, subtree: true });
