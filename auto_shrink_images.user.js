@@ -72,7 +72,7 @@ wm = (() => {
 
 // From an answer to: https://stackoverflow.com/questions/29321742/react-getting-a-component-from-a-dom-element-for-debugging/39165137
 function FindReact(dom, traverseUp = 0) {
-    const key = Object.keys(dom).find(key=>key.startsWith("__reactInternalInstance$"));
+    const key = Object.keys(dom).find(key=>key.startsWith("__reactFiber$"));
     const domFiber = dom[key];
     if (domFiber == null) return null;
 
