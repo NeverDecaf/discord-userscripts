@@ -1,18 +1,33 @@
 // ==UserScript==
 // @name         Discord Auto-Shrink Images
-// @version      0.2.1
+// @version      0.3.0
 // @description  When pasting images >8MB, shrink filesize to below 8MB by converting to jpeg then reducing jpeg quality.
 // @author       NeverDecaf
 // @match        discord.com/*
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
-
+const chunkName = 'webpackChunkdiscord_app'
 // WebpackModules from an old version of BetterDiscord (https://github.com/rauenzi/BetterDiscordApp)
+
 wm = (() => {
-            const req = webpackJsonp.push([[], {__extra_id__: (module, exports, req) => module.exports = req}, [["__extra_id__"]]]);
-            delete req.m.__extra_id__;
-            delete req.c.__extra_id__;
+			const req = (() => {
+				const id = "imgshrink-webpackmodules";
+				let __webpack_require__ = undefined;
+				if (typeof (webpackJsonp) !== "undefined") {
+					__webpack_require__ = window.webpackJsonp.push([[], {
+						[id]: (module, exports, __internal_require__) => module.exports = __internal_require__
+					}, [[id]]]);
+				} else if (typeof (window[chunkName]) !== "undefined") {
+					window[chunkName].push([[id], 
+						{},
+						__internal_require__ => __webpack_require__ = __internal_require__
+					]);
+				}
+				delete __webpack_require__.m[id];
+				delete __webpack_require__.c[id];
+				return __webpack_require__
+			})();
 
             const shouldProtect = theModule => {
                 if (theModule.remove && theModule.set && theModule.clear && theModule.get && !theModule.sort) return true;
@@ -209,28 +224,18 @@ function convertBlobs(type, func, caller, args) {
 				var dataURL = imgC.toDataURL("image/jpeg", qualitySetting);
 
 				let result = dataURItoBlob(dataURL, this.file.name.replace(/(.*)\.[^.]+$/, '$1_DOWNSCALED.JPEG'))
-				args[0][this.index] = result;
+				this.filelist[this.index] = result;
 				resolve(result);
 			}.bind(this)
-		}.bind({index: parseInt(i), file: file})))
+		}.bind({index: parseInt(i), file: file, filelist: args[0]})))
     }
-    // If adding support for multi-upload you'll need this:
     Promise.all(promises).then(v => {func.apply(caller, args)});
 }
 
 function waitForLoad(maxtimems, callback) {
     var interval = 100; // ms
-    if (maxtimems > 0 && (typeof webpackJsonp === 'undefined' || wm.find(m => m.default && m.default.toString().includes('anyFileTooLarge')) === null)) {
+    if (maxtimems > 0 && (typeof wm === 'undefined' || wm.find(m => m.default && m.default.toString().includes('anyFileTooLarge')) === null)) {
         setTimeout(() => waitForLoad(maxtimems - interval, callback), interval);
-    } else {
-        callback();
-    }
-}
-
-function waitForUploadArea(maxtimems, callback) {
-    var interval = 100; // ms
-    if (maxtimems > 0 && (typeof webpackJsonp === 'undefined' || wm.findByUniqueProperties(['uploadArea']) === null || document.getElementsByClassName(wm.findByUniqueProperties(['uploadArea']).uploadArea).length == 0)) {
-        setTimeout(() => waitForUploadArea(maxtimems - interval, callback), interval);
     } else {
         callback();
     }
@@ -244,36 +249,8 @@ waitForLoad(10000, () => {
 		if ((arguments[0][0].size <= wm.findByUniqueProperties(['anyFileTooLarge']).maxFileSize()) || (arguments[0][0].type.split('/')[0] !== 'image')) {
 			return cacheF.apply(this, arguments);
 		}
+		arguments[0] = Array.from(arguments[0]) // convert FileList to array as FileList is immutable.
 		convertBlobs('image/jpeg', cacheF, this, arguments)
     };
 })();
 });
-
-var callback = function(mutationsList, observer) {
-    for(const mutation of mutationsList) {
-        if (mutation.type === 'childList') {
-            mutation.addedNodes.forEach(e => {
-                if (e.className && typeof(e.className) === 'string' && e.className.split(' ').some((c) => /chat-.*/.test(c))) {
-                    e.childNodes.forEach(f => {
-                        if (f.className && typeof(f.className) === 'string' && f.className.split(' ').some((c) => /uploadArea-.*/.test(c))) {
-							FindReact(f).promptToUpload = (function () {
-							var cacheF = FindReact(f).promptToUpload
-							return function () {
-								// resize all too large images
-								if (!(arguments[0] instanceof FileList)) {
-									return cacheF.apply(this, arguments);
-								}
-								arguments[0] = Array.from(arguments[0])
-								convertBlobs('image/jpeg', cacheF, this, arguments)
-								};
-							})();
-							// observer.disconnect()
-                        }
-                    })
-                }
-            })
-        }
-    }
-};
-var observer = new MutationObserver(callback);
-observer.observe(document.getElementById('app-mount'), { attributes: false, childList: true, subtree: true });
