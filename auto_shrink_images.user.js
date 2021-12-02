@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Discord Auto-Shrink Images
-// @version      0.3.0
+// @version      0.3.1
 // @description  When pasting images >8MB, shrink filesize to below 8MB by converting to jpeg then reducing jpeg quality.
 // @author       NeverDecaf
 // @match        discord.com/*
@@ -10,7 +10,7 @@
 const chunkName = 'webpackChunkdiscord_app'
 // WebpackModules from an old version of BetterDiscord (https://github.com/rauenzi/BetterDiscordApp)
 
-wm = (() => {
+const wm = (() => {
 			const req = (() => {
 				const id = "imgshrink-webpackmodules";
 				let __webpack_require__ = undefined;
@@ -234,7 +234,7 @@ function convertBlobs(type, func, caller, args) {
 
 function waitForLoad(maxtimems, callback) {
     var interval = 100; // ms
-    if (maxtimems > 0 && (typeof wm === 'undefined' || wm.find(m => m.default && m.default.toString().includes('anyFileTooLarge')) === null)) {
+    if (maxtimems > 0 && (typeof wm === 'undefined' || wm.findByUniqueProperties(['promptToUpload']) === null)) {
         setTimeout(() => waitForLoad(maxtimems - interval, callback), interval);
     } else {
         callback();
@@ -242,15 +242,18 @@ function waitForLoad(maxtimems, callback) {
 }
 
 waitForLoad(10000, () => {
-	var uploadFunc = wm.find(m => m.default && m.default.toString().includes('anyFileTooLarge'))
-	uploadFunc.default = (function () {
-    var cacheF = uploadFunc.default
-    return function () {
-		if ((arguments[0][0].size <= wm.findByUniqueProperties(['anyFileTooLarge']).maxFileSize()) || (arguments[0][0].type.split('/')[0] !== 'image')) {
-			return cacheF.apply(this, arguments);
-		}
-		arguments[0] = Array.from(arguments[0]) // convert FileList to array as FileList is immutable.
-		convertBlobs('image/jpeg', cacheF, this, arguments)
-    };
-})();
+	var uploadFunc = wm.findByUniqueProperties(['promptToUpload'])
+	uploadFunc.promptToUpload = (function () {
+		var cacheF = uploadFunc.promptToUpload
+		return function () {
+			if (!(arguments[0] instanceof FileList)) {
+				return cacheF.apply(this, arguments);
+			}
+			if ((arguments[0][0].size <= wm.findByUniqueProperties(['anyFileTooLarge']).maxFileSize()) || (arguments[0][0].type.split('/')[0] !== 'image')) {
+				return cacheF.apply(this, arguments);
+			}
+			arguments[0] = Array.from(arguments[0])
+			convertBlobs('image/jpeg', cacheF, this, arguments)
+		};
+	})();
 });
