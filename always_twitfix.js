@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Always TwitFix
-// @version      0.1.1
-// @description  Replace twitter.com links in messages you send (on discord) with fxtwitter.com
+// @version      0.2
+// @description  Replace twitter.com links in messages you send (on discord) with vxtwitter.com
 // @author       NeverDecaf
 // @match        discord.com/*
 // @run-at       document-end
@@ -158,8 +158,9 @@
         }
     }
 
-    const TWITTER_DOMAIN = /(twitter\.com)(\/[^\/]+\/status\/\d+)/gi;
-    const TWITFIX_DOMAIN = "fxtwitter.com";
+    const TWITTER_DOMAIN =
+        /(\/\/)(?<!vx)(twitter\.com)(\/[^\/]+\/status\/\d+)/gi;
+    const TWITFIX_DOMAIN = "vxtwitter.com";
     waitForLoad(10000, () => {
         var msgF = wm.findByUniqueProperties(["sendMessage"]);
         msgF.sendMessage = (function () {
@@ -169,7 +170,7 @@
                     // modify message with regex
                     arguments[1].content = arguments[1].content.replaceAll(
                         TWITTER_DOMAIN,
-                        TWITFIX_DOMAIN + "$2"
+                        "$1" + TWITFIX_DOMAIN + "$3"
                     );
                 }
                 return cacheF.apply(this, arguments);
