@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Discord full resolution image modal
-// @version      0.1
+// @version      0.2
 // @description  Replace image preview modal with the original image (the image you see when clicking "Open original").
 // @author       NeverDecaf
 // @match        discord.com/*
@@ -9,6 +9,7 @@
 // ==/UserScript==
 (function () {
     "use strict";
+    const ENABLE_FALLBACK = true; // If true will revert to the original image on error.
     const modalObserver = new MutationObserver(function (mutations, observer) {
         mutations.forEach(function (mutation) {
             mutation.target
@@ -16,7 +17,13 @@
                     'div[class*="modal"] div[class*="imageWrapper"] img'
                 )
                 .forEach((img) => {
+                    if (ENABLE_FALLBACK && !img.processed)
+                        img.setAttribute(
+                            "onerror",
+                            `this.onerror=null; this.src='${img.src}';`
+                        );
                     img.src = img.parentElement.nextSibling.href;
+                    img.processed = true;
                 });
         });
     });
