@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Discord full resolution image modal
-// @version      0.2
+// @version      0.3
 // @description  Replace image preview modal with the original image (the image you see when clicking "Open original").
 // @author       NeverDecaf
 // @match        discord.com/*
@@ -22,8 +22,10 @@
                             "onerror",
                             `this.onerror=null; this.src='${img.src}';`
                         );
-                    img.src = img.parentElement.nextSibling.href;
-                    img.processed = true;
+                    if (img.parentElement.nextSibling) {
+                        img.src = img.parentElement.nextSibling.href;
+                        img.processed = true;
+                    }
                 });
         });
     });
