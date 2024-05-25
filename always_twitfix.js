@@ -10,8 +10,8 @@
 (function () {
     "use strict";
     const TWITTER_DOMAIN =
-        /(\/\/)(?<!fx)(twitter\.com)(\/[^\/]+\/status\/\d+)/gi;
-    const TWITFIX_DOMAIN = "fxtwitter.com";
+        /(\/\/)(twitter\.com|vxtwitter\.com|x\.com|fxtwitter\.com)(\/[^\/]+\/status\/\d+)/gi;
+    const TWITFIX_DOMAIN = "fixupx.com";
     /**
      * Allows for grabbing and searching through Discord's webpacked modules.
      * @module WebpackModules
@@ -174,7 +174,7 @@
                     "WebpackModules~getModule",
                     "Module filter threw an exception.",
                     filter,
-                    err
+                    err,
                 );
             hasThrown.add(filter);
             return false;
@@ -622,7 +622,7 @@
                                 console.log(
                                     "WebpackModules",
                                     "Could not fire callback listener:",
-                                    error
+                                    error,
                                 );
                             }
                         }
@@ -630,7 +630,7 @@
                         console.log(
                             "WebpackModules",
                             "Could not patch pushed module",
-                            error
+                            error,
                         );
                     }
                 };
@@ -643,7 +643,7 @@
             return Reflect.apply(
                 this.__ORIGINAL_PUSH__,
                 window[this.chunkName],
-                [chunk]
+                [chunk],
             );
         }
     }
@@ -667,7 +667,7 @@
                 new Promise((done) => {
                     if (UsedModules.UserStore.getCurrentUser()) return done();
                     UsedModules.Dispatcher.subscribe("CONNECTION_OPEN", done);
-                })
+                }),
         )
         .then(() => {
             var msgF = UsedModules.messageSend;
@@ -678,7 +678,7 @@
                         // modify message with regex
                         arguments[1].content = arguments[1].content.replaceAll(
                             TWITTER_DOMAIN,
-                            "$1" + TWITFIX_DOMAIN + "$3"
+                            "$1" + TWITFIX_DOMAIN + "$3",
                         );
                     }
                     return cacheF.apply(this, arguments);

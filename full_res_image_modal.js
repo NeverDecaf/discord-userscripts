@@ -14,16 +14,17 @@
         mutations.forEach(function (mutation) {
             mutation.target
                 .querySelectorAll(
-                    'div[class*="modal"] div[class*="imageWrapper"] img'
+                    'div[class*="modal"] div[class*="imageWrapper"] img',
                 )
                 .forEach((img) => {
                     if (ENABLE_FALLBACK && !img.processed)
                         img.setAttribute(
                             "onerror",
-                            `this.onerror=null; this.src='${img.src}';`
+                            `this.onerror=null; this.src='${img.src}';`,
                         );
-                    if (img.parentElement.nextSibling) {
-                        img.src = img.parentElement.nextSibling.href;
+                    if (img.parentElement.parentElement.nextSibling) {
+                        img.src =
+                            img.parentElement.parentElement.nextSibling.href;
                         img.processed = true;
                     }
                 });
@@ -32,7 +33,7 @@
 
     const attachObserver = new MutationObserver(function (mutations, observer) {
         const containers = document.body.querySelectorAll(
-            'div[class*="layerContainer"]'
+            'div[class*="layerContainer"]',
         );
         if (containers.length) {
             containers.forEach((c) => {
