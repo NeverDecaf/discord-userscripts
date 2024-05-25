@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Discord full resolution image modal
-// @version      0.4
+// @version      0.4.1
 // @description  Replace image preview modal with the original image (the image you see when clicking "Open original").
 // @author       NeverDecaf
 // @match        discord.com/*

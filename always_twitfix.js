@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Always TwitFix
-// @version      0.3.1
+// @version      0.3.2
 // @description  Replace twitter.com links in messages you send (on discord) with fxtwitter.com
 // @author       NeverDecaf
 // @match        discord.com/*
