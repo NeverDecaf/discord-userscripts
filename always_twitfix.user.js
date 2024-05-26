@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Always TwitFix
-// @version      0.3.2
+// @version      0.3.3
 // @description  Replace twitter.com links in messages you send (on discord) with fxtwitter.com
 // @author       NeverDecaf
 // @match        discord.com/*
@@ -11,7 +11,7 @@
     "use strict";
     const TWITTER_DOMAIN =
         /(\/\/)(twitter\.com|vxtwitter\.com|x\.com|fxtwitter\.com)(\/[^\/]+\/status\/\d+)/gi;
-    const TWITFIX_DOMAIN = "fixupx.com";
+    const TWITFIX_DOMAIN = "fxtwitter.com";
     /**
      * Allows for grabbing and searching through Discord's webpacked modules.
      * @module WebpackModules
