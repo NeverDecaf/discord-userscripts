@@ -1,17 +1,24 @@
 // ==UserScript==
 // @name         Always TwitFix
-// @version      0.3.3
-// @description  Replace twitter.com links in messages you send (on discord) with fxtwitter.com
+// @version      0.4.0
+// @description  Replace twitter.com links in messages you send (on discord) with fxtwitter.com, also converts bilibili to vxbilibili
 // @author       NeverDecaf
-// @match        discord.com/*
+// @match        https://discord.com/*
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
 (function () {
     "use strict";
-    const TWITTER_DOMAIN =
-        /(\/\/)(twitter\.com|vxtwitter\.com|x\.com|fxtwitter\.com)(\/[^\/]+\/status\/\d+)/gi;
-    const TWITFIX_DOMAIN = "fxtwitter.com";
+    // map a regex (which matches relevant urls) to a domain replacement, groups 1 and 3 must be defined (but are preserved)
+    const DOMAIN_SWAPS = [];
+    DOMAIN_SWAPS.push({
+        regex: /(\/\/)(?:www\.)?(twitter\.com|x\.com)(\/[^\/]+\/status\/\d+)/gi,
+        domain: "fxtwitter.com",
+    });
+    DOMAIN_SWAPS.push({
+        regex: /(\/\/)(?:www\.)?(bilibili\.com)(\/video\/[^\/]+)/gi,
+        domain: "vxbilibili.com",
+    });
     /**
      * Allows for grabbing and searching through Discord's webpacked modules.
      * @module WebpackModules
@@ -676,10 +683,13 @@
                 return function () {
                     if (arguments.length > 2 && arguments[1].content) {
                         // modify message with regex
-                        arguments[1].content = arguments[1].content.replaceAll(
-                            TWITTER_DOMAIN,
-                            "$1" + TWITFIX_DOMAIN + "$3",
-                        );
+                        DOMAIN_SWAPS.forEach((pair) => {
+                            arguments[1].content =
+                                arguments[1].content.replaceAll(
+                                    pair.regex,
+                                    "$1" + pair.domain + "$3",
+                                );
+                        });
                     }
                     return cacheF.apply(this, arguments);
                 };
