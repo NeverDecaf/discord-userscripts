@@ -4,7 +4,7 @@
  * @module WebpackModules
  * @version 0.0.2
  * from https://github.com/BetterDiscord/BetterDiscord/blob/main/renderer/src/modules/webpackmodules.js
- * Logger import replaced with dummy class; Filters and WebpackModules exposed via window.
+ * place contents inside main(), replace Logger import with dummy class, remove exports
  */
 (function () {
     function main() {
@@ -864,13 +864,73 @@
             }
         }
 
+        async function retryGetLazyUntilResolved(filter, maxAttempts = 100) {
+            // chatGPT function
+            for (let attempts = 0; attempts < maxAttempts; attempts++) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 1000);
+
+                try {
+                    const result = await WebpackModules.getLazy(filter, {
+                        signal: controller.signal,
+                    });
+                    clearTimeout(timeoutId);
+                    if (result) return result; // resolved successfully, exit loop & return
+                } catch (err) {
+                    clearTimeout(timeoutId);
+                    if (err.name !== "AbortError") {
+                        // Some error other than abort - rethrow or handle as you want
+                        throw err;
+                    }
+                    // else it was aborted, so retry automatically by looping
+                }
+            }
+        }
+        async function waitForAllModules(filterMap) {
+            // first wait for login
+            return retryGetLazyUntilResolved(
+                Filters.byKeys(["dispatch", "subscribe", "register"]),
+            )
+                .then(
+                    (dispatcher) =>
+                        new Promise((done) => {
+                            retryGetLazyUntilResolved(
+                                Filters.byKeys(["getCurrentUser", "getUser"]),
+                            ).then((userStore) => {
+                                if (userStore.getCurrentUser()) done();
+                            });
+                            dispatcher.subscribe("CONNECTION_OPEN", done);
+                        }),
+                )
+                .then(() => {
+                    const modulePromises = [];
+                    for (const [key, value] of Object.entries(filterMap)) {
+                        const p = retryGetLazyUntilResolved(value);
+                        modulePromises.push(p);
+                        p.then((mod) => (filterMap[key] = mod));
+                    }
+                    return Promise.allSettled(modulePromises);
+                });
+        }
         WebpackModules.initialize();
-        window.WebpackModules = WebpackModules;
+        window.waitForAllModules = waitForAllModules;
         window.Filters = Filters;
+        window.WebpackModules = WebpackModules;
     }
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", main);
-    } else {
-        main();
-    }
+
+    window.onload = main;
 })();
+function runAfterWMLoaded(mainF) {
+    Object.defineProperty(window, "WebpackModules", {
+        configurable: true,
+        set(v) {
+            Object.defineProperty(window, "WebpackModules", {
+                configurable: true,
+                enumerable: true,
+                writable: true,
+                value: v,
+            });
+            mainF();
+        },
+    });
+}
