@@ -5,3 +5,5 @@ Shrink images uploaded or pasted into the client with `ctrl+v` to bring them bel
 Replace links to x/twitter posts with `fxtwitter.com` in outgoing messages. Also replaces bilibili links with `vxbilibili.com`.
 ## [full_res_image_modal](https://github.com/NeverDecaf/discord-userscripts/raw/master/full_res_image_modal.user.js)
 Replace downscaled images (in the modal shown after clicking on an image) with their original source image, some images may fail to display due to [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).
+## [dont_show_typing](https://github.com/NeverDecaf/discord-userscripts/raw/master/dont_show_typing.user.js)
+Hide your typing status.
