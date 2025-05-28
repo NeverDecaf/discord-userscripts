@@ -17,7 +17,6 @@
                 console.error(...args);
             }
         }
-
         /**
          * Checks if a given module matches a set of parameters.
          * @callback module:WebpackModules.Filters~filter
@@ -183,7 +182,6 @@
                 };
             }
         }
-
         const hasThrown = new WeakSet();
 
         const wrapFilter = (filter) => (exports, module, moduleId) => {
@@ -912,31 +910,23 @@
                     return Promise.allSettled(modulePromises);
                 });
         }
-        WebpackModules.initialize();
-        window.waitForAllModules = waitForAllModules;
-        window.Filters = Filters;
-        window.WebpackModules = WebpackModules;
+        window.waitForAllModules =
+            window.waitForAllModules ?? waitForAllModules;
+        window.Filters = window.Filters ?? Filters;
+        if (!window.WebpackModules) {
+            WebpackModules.initialize();
+            window.WebpackModules = WebpackModules;
+            _wm_ready_resolver();
+        } else _wm_ready_resolver();
     }
 
+    let _wm_ready_resolver;
+    const webpackModulesReady = new Promise((resolve) => {
+        _wm_ready_resolver = resolve;
+    });
+    async function WMInit() {
+        return webpackModulesReady;
+    }
+    window.WMInit = WMInit;
     window.onload = main;
 })();
-if (!window._wm_callbacks) {
-    window._wm_callbacks = [];
-}
-Object.defineProperty(window, "WebpackModules", {
-    configurable: true,
-    set(v) {
-        Object.defineProperty(window, "WebpackModules", {
-            configurable: true,
-            enumerable: true,
-            writable: true,
-            value: v,
-        });
-        window._wm_callbacks.forEach((cb) => cb());
-        window._wm_callbacks.length = 0;
-    },
-});
-function runAfterWMLoaded(mainF) {
-    if (window.WebpackModules) mainF();
-    else window._wm_callbacks.push(mainF);
-}
