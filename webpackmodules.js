@@ -920,17 +920,21 @@
 
     window.onload = main;
 })();
+const _wm_callbacks = [];
+Object.defineProperty(window, "WebpackModules", {
+    configurable: true,
+    set(v) {
+        Object.defineProperty(window, "WebpackModules", {
+            configurable: true,
+            enumerable: true,
+            writable: true,
+            value: v,
+        });
+        _wm_callbacks.forEach((cb) => cb());
+        _wm_callbacks.length = 0;
+    },
+});
 function runAfterWMLoaded(mainF) {
-    Object.defineProperty(window, "WebpackModules", {
-        configurable: true,
-        set(v) {
-            Object.defineProperty(window, "WebpackModules", {
-                configurable: true,
-                enumerable: true,
-                writable: true,
-                value: v,
-            });
-            mainF();
-        },
-    });
+    if (window.WebpackModules) mainF();
+    else _wm_callbacks.push(mainF);
 }
