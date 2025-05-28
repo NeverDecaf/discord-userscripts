@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Discord full resolution image modal
-// @version      0.5.0
+// @version      0.5.1
 // @description  Replace image preview modal with the original image (the image you see when clicking "Open original").
 // @author       NeverDecaf
 // @match        https://discord.com/*
@@ -13,18 +13,23 @@
     const DEBUG_STYLES = false; // If true will apply green/red borders for debugging.
     const EXCLUDED_HOSTS = ["share.redd.it", "reddit.com"]; // do not replace image src on these domains
     const EMBED_REGEX =
-        /^https:\/\/images-ext-\d+\.discordapp\.net\/external\/[^/]+\/([a-z]+)\/([^?]+)(\?.*)?$/i;
+        /^https:\/\/images-ext-\d+\.discordapp\.net\/external\/[^/]+\/(\?[^/]+)?\/([a-z]+)\/([^?]+)(\?.*)?$/i;
     // Replace Discord URLs in the img src with the preferred format
     function fixSrc(src) {
         let url = decodeURIComponent(src)
             .replace("media.discordapp.net", "cdn.discordapp.com")
-            .replace(EMBED_REGEX, (_, proto, path) => `${proto}://${path}`);
+            .replace(
+                EMBED_REGEX,
+                (_, frag, proto, path) => `${proto}://${path}${frag}`,
+            );
         // Special case for Twitter URLs
         if (url.startsWith("https://pbs.twimg.com/media/")) {
             url = url.replace(/:\w+$/, ""); // remove :large or :anything
-            // Append ?name=orig only if it's not already present
-            if (!url.endsWith("?name=orig")) {
-                url += "?name=orig";
+            // Use URL to check if name=orig param exists
+            const u = new URL(url);
+            if (!u.searchParams.has("name")) {
+                u.searchParams.append("name", "orig");
+                url = u.toString();
             }
         }
         return url;
@@ -36,7 +41,7 @@
         if (
             EXCLUDED_HOSTS.some((host) => {
                 const embeddedHost =
-                    img.src.match(EMBED_REGEX)?.[2].split("/")[0] ||
+                    img.src.match(EMBED_REGEX)?.[3].split("/")[0] ||
                     new URL(img.src).hostname;
                 return (
                     embeddedHost === host || embeddedHost.endsWith(`.${host}`)
