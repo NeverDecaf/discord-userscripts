@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Always TwitFix
-// @version      0.5.0
+// @version      0.5.1
 // @description  Replace twitter.com links in messages you send (on discord) with fxtwitter.com, also converts bilibili to vxbilibili
 // @author       NeverDecaf
 // @match        https://discord.com/*
-// @require      https://neverdecaf.github.io/discord-userscripts/webpackmodules.js
+// @require      https://neverdecaf.github.io/discord-userscripts/webpackmodules.js?v=0
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
