@@ -927,6 +927,12 @@
     async function WMInit() {
         return webpackModulesReady;
     }
-    window.WMInit = WMInit;
-    window.onload = main;
+    if (!window.WMInit) {
+        window.WMInit = WMInit;
+        if (document.readyState === "complete") {
+            main();
+        } else {
+            window.addEventListener("load", main);
+        }
+    }
 })();
