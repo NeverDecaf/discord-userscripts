@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Discord full resolution image modal
-// @version      0.5.1
+// @version      0.5.2
 // @description  Replace image preview modal with the original image (the image you see when clicking "Open original").
 // @author       NeverDecaf
 // @match        https://discord.com/*
@@ -13,14 +13,14 @@
     const DEBUG_STYLES = false; // If true will apply green/red borders for debugging.
     const EXCLUDED_HOSTS = ["share.redd.it", "reddit.com"]; // do not replace image src on these domains
     const EMBED_REGEX =
-        /^https:\/\/images-ext-\d+\.discordapp\.net\/external\/[^/]+\/(\?[^/]+)?\/([a-z]+)\/([^?]+)(\?.*)?$/i;
+        /^https:\/\/images-ext-\d+\.discordapp\.net\/external\/[^/]+(?:\/(\?[^/]+))?\/([a-z]+)\/([^?]+)(\?.*)?$/i;
     // Replace Discord URLs in the img src with the preferred format
     function fixSrc(src) {
         let url = decodeURIComponent(src)
             .replace("media.discordapp.net", "cdn.discordapp.com")
             .replace(
                 EMBED_REGEX,
-                (_, frag, proto, path) => `${proto}://${path}${frag}`,
+                (_, frag, proto, path) => `${proto}://${path}${frag ?? ""}`,
             );
         // Special case for Twitter URLs
         if (url.startsWith("https://pbs.twimg.com/media/")) {
@@ -40,16 +40,16 @@
         if (img.dataset.observerAttached) return; // Avoid duplicate observers
         if (
             EXCLUDED_HOSTS.some((host) => {
-                const embeddedHost =
-                    img.src.match(EMBED_REGEX)?.[3].split("/")[0] ||
-                    new URL(img.src).hostname;
+                const match = img.src.match(EMBED_REGEX);
+                const embeddedHost = match
+                    ? match[3].split("/")[0]
+                    : new URL(img.src).hostname;
                 return (
                     embeddedHost === host || embeddedHost.endsWith(`.${host}`)
                 );
             })
         )
             return;
-
         const applyFix = () => {
             const oldSrc = img.src;
             const newSrc = fixSrc(oldSrc);
@@ -57,19 +57,18 @@
                 img.src = newSrc;
             }
         };
-        if (ENABLE_FALLBACK)
-            img.setAttribute(
-                "onerror",
-                `this.onerror=null; this.src=this.dataset.originalsrc; ${
-                    DEBUG_STYLES ? "this.style.border = '1px solid red';" : ""
-                }`,
-            );
+
+        const srcObserver = new MutationObserver(() => applyFix());
+        if (ENABLE_FALLBACK) {
+            img.onerror = () => {
+                img.onerror = null;
+                srcObserver?.disconnect();
+                img.src = img.dataset.originalsrc;
+                if (DEBUG_STYLES) img.style.border = "1px solid red";
+            };
+        }
         img.dataset.originalsrc = img.src;
         applyFix(); // Fix immediately on attach
-
-        const srcObserver = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => applyFix());
-        });
 
         srcObserver.observe(img, {
             attributes: true,
