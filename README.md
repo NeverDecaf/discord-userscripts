@@ -7,3 +7,5 @@ Replace links to x/twitter posts with `fxtwitter.com` in outgoing messages. Also
 Replace downscaled images (in the modal shown after clicking on an image) with their original source image, some images may fail to display due to [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS).
 ## [dont_show_typing](https://github.com/NeverDecaf/discord-userscripts/raw/master/dont_show_typing.user.js)
 Hide your typing status.
+## [filename_randomizer](https://github.com/NeverDecaf/discord-userscripts/raw/master/filename_randomizer.user.js)
+Replace all uploaded filename with the current Unix timestamp.
