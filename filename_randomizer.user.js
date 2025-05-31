@@ -4,7 +4,7 @@
 // @description  "Randomize" filenames of uploaded files on discord by replacing them with the current timestamp
 // @author       NeverDecaf
 // @match        https://discord.com/*
-// @require      https://neverdecaf.github.io/discord-userscripts/webpackmodules.js
+// @require      https://neverdecaf.github.io/discord-userscripts/webpackmodules.js?v=1
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
