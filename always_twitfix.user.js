@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Always TwitFix
-// @version      0.5.2
-// @description  Replace twitter.com links in messages you send (on discord) with fxtwitter.com, also converts bilibili to vxbilibili
+// @version      0.5.3
+// @description  Replace twitter.com links in messages you send (on discord) with fxtwitter.com, also converts bilibili to vxbilibili and tiktok to vxtiktok
 // @author       NeverDecaf
 // @match        https://discord.com/*
 // @require      https://neverdecaf.github.io/discord-userscripts/webpackmodules.js?v=1
@@ -24,6 +24,14 @@
                 {
                     regex: /(\/\/)(?:www\.)?(bilibili\.com)(\/video\/[^\/]+)/gi,
                     domain: "vxbilibili.com",
+                },
+                {
+                    regex: /(\/\/)(?:www\.)?(b23\.tv)(\/[^\/]+)/gi,
+                    domain: "vxb23.tv",
+                },
+                {
+                    regex: /(\/\/)(?:www\.)?(tiktok\.com)(\/[^\/]+\/video\/\d+)/gi,
+                    domain: "vxtiktok.com",
                 },
             ];
 
