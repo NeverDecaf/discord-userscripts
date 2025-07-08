@@ -9,3 +9,5 @@ Replace downscaled images (in the modal shown after clicking on an image) with t
 Hide your typing status.
 ## [filename_randomizer](https://github.com/NeverDecaf/discord-userscripts/raw/master/filename_randomizer.user.js)
 Replace all uploaded filenames with the current Unix timestamp. Extensions are preserved, but converted to lowercase.
+## [block_tracking](https://github.com/NeverDecaf/discord-userscripts/raw/master/block_tracking.user.js)
+Blocks *some* internal tracking requests. **Not** a complete privacy solution.
