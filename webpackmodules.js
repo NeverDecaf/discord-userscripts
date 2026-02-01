@@ -887,17 +887,16 @@
         async function waitForAllModules(filterMap) {
             // first wait for login
             return retryGetLazyUntilResolved(
-                Filters.byKeys(["dispatch", "subscribe", "register"]),
+                Filters.byKeys(["getCurrentUser", "getUser"]),
             )
                 .then(
-                    (dispatcher) =>
+                    (userStore) =>
                         new Promise((done) => {
-                            retryGetLazyUntilResolved(
-                                Filters.byKeys(["getCurrentUser", "getUser"]),
-                            ).then((userStore) => {
-                                if (userStore.getCurrentUser()) done();
-                            });
-                            dispatcher.subscribe("CONNECTION_OPEN", done);
+                            if (userStore.getCurrentUser()) done();
+                            userStore._dispatcher.subscribe(
+                                "CONNECTION_OPEN",
+                                done,
+                            );
                         }),
                 )
                 .then(() => {
