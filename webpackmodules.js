@@ -886,17 +886,16 @@
         }
         async function waitForAllModules(filterMap) {
             // first wait for login
+            var dispatcher = null;
             return retryGetLazyUntilResolved(
                 Filters.byKeys(["getCurrentUser", "getUser"]),
             )
                 .then(
                     (userStore) =>
                         new Promise((done) => {
+                            dispatcher = userStore._dispatcher;
                             if (userStore.getCurrentUser()) done();
-                            userStore._dispatcher.subscribe(
-                                "CONNECTION_OPEN",
-                                done,
-                            );
+                            else dispatcher.subscribe("CONNECTION_OPEN", done);
                         }),
                 )
                 .then(() => {
@@ -906,6 +905,7 @@
                         modulePromises.push(p);
                         p.then((mod) => (filterMap[key] = mod));
                     }
+                    filterMap.Dispatcher = dispatcher;
                     return Promise.allSettled(modulePromises);
                 });
         }
