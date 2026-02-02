@@ -4,7 +4,7 @@
 // @description  Prevents other users from seeing when you are typing.
 // @author       NeverDecaf
 // @match        https://discord.com/*
-// @require      https://neverdecaf.github.io/discord-userscripts/webpackmodules.js?v=2
+// @require      https://neverdecaf.github.io/discord-userscripts/webpackmodules.js?v=3
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==

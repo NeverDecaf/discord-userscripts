@@ -862,7 +862,11 @@
             }
         }
 
-        async function retryGetLazyUntilResolved(filter, maxAttempts = 100) {
+        async function retryGetLazyUntilResolved(
+            filter,
+            options = {},
+            maxAttempts = 100,
+        ) {
             // chatGPT function
             for (let attempts = 0; attempts < maxAttempts; attempts++) {
                 const controller = new AbortController();
@@ -871,6 +875,7 @@
                 try {
                     const result = await WebpackModules.getLazy(filter, {
                         signal: controller.signal,
+                        ...options,
                     });
                     clearTimeout(timeoutId);
                     if (result) return result; // resolved successfully, exit loop & return
@@ -901,7 +906,13 @@
                 .then(() => {
                     const modulePromises = [];
                     for (const [key, value] of Object.entries(filterMap)) {
-                        const p = retryGetLazyUntilResolved(value);
+                        let filter = value,
+                            options = {};
+                        if (typeof value === "object" && value.filter) {
+                            filter = value.filter;
+                            options = value.options;
+                        }
+                        const p = retryGetLazyUntilResolved(filter, options);
                         modulePromises.push(p);
                         p.then((mod) => (filterMap[key] = mod));
                     }
