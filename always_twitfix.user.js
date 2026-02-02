@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Always TwitFix
-// @version      0.5.3
-// @description  Replace twitter.com links in messages you send (on discord) with fxtwitter.com, also converts bilibili to vxbilibili and tiktok to vxtiktok
+// @version      0.5.4
+// @description  Replace twitter.com links in messages you send (on discord) with fxtwitter.com, also converts bilibili => vxbilibili, tiktok => vxtiktok, pixiv => phixiv
 // @author       NeverDecaf
 // @match        https://discord.com/*
-// @require      https://neverdecaf.github.io/discord-userscripts/webpackmodules.js?v=1
+// @require      https://neverdecaf.github.io/discord-userscripts/webpackmodules.js?v=3
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
@@ -12,7 +12,10 @@
     "use strict";
     WMInit().then(() => {
         const Modules = {
-            messageSend: Filters.byKeys(["sendMessage"]),
+            messageSend: {
+                filter: Filters.byKeys(["sendMessage"]),
+                options: { searchExports: true },
+            },
         };
         waitForAllModules(Modules).then(() => {
             // map a regex (which matches relevant urls) to a domain replacement, groups 1 and 3 must be defined (but are preserved)
@@ -32,6 +35,10 @@
                 {
                     regex: /(\/\/)(?:www\.)?(tiktok\.com)(\/[^\/]+\/video\/\d+)/gi,
                     domain: "vxtiktok.com",
+                },
+                {
+                    regex: /(\/\/)(?:www\.)?(pixiv\.net)(\/.*\d+.*)/gi,
+                    domain: "phixiv.net",
                 },
             ];
 
